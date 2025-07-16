@@ -8,7 +8,7 @@ export function useSupabaseData(user: User | null) {
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   const [likedSongs, setLikedSongs] = useState<Set<number>>(new Set())
   const [lastPlayedSong, setLastPlayedSong] = useState<Song | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [currentSongStartTime, setCurrentSongStartTime] = useState<Date | null>(null)
   const currentSongRef = useRef<string | null>(null)
 
@@ -439,8 +439,18 @@ try {
 
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true)
+      if (!user) {
+        // Reset data when user logs out
+        setSongs([])
+        setPlaylists([])
+        setLikedSongs(new Set())
+        setLastPlayedSong(null)
+        setLoading(false)
+        return
+      }
+
       try {
+        setLoading(true)
         await Promise.all([fetchSongs(), fetchPlaylists()])
       } catch (error) {
         console.error('Error loading data:', error)
@@ -449,16 +459,7 @@ try {
       }
     }
 
-    if (user) {
-      loadData()
-    } else {
-      // Reset data when user logs out
-      setSongs([])
-      setPlaylists([])
-      setLikedSongs(new Set())
-      setLastPlayedSong(null)
-      setLoading(false)
-    }
+    loadData()
   }, [user])
 
   return {

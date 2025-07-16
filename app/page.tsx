@@ -14,6 +14,7 @@ import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import AuthWrapper from '@/components/AuthWrapper';
 import { useAuth } from '@/hooks/useAuth';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useQueue } from '@/hooks/useQueue';
 import { Song } from '@/types';
 import { useTheme } from '@/components/ThemeContext';
 
@@ -35,6 +36,15 @@ function MusicPlayerContent() {
     recordListeningHistory,
     stopCurrentSongTracking
   } = useSupabaseData(user);
+  
+  const {
+    queue,
+    addToQueue,
+    removeFromQueue,
+    getNextSongFromQueue,
+    clearQueue,
+    hasQueue
+  } = useQueue();
 
   const [activeTab, setActiveTab] = useState<'home' | 'search' | 'settings'>('home');
   const [currentPage, setCurrentPage] = useState<'main' | 'playlists' | 'liked'>('main');
@@ -181,6 +191,9 @@ useEffect(() => {
     recordListeningHistory(song.id);
   };
 
+  const handleAddToQueue = (song: Song) => {
+    addToQueue(song);
+  };
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
   };
@@ -280,6 +293,23 @@ const handleLoadedMetadata = async () => {
 const handleNext = () => {
   if (!currentSong) return;
 
+  // Check if there's a song in the queue first
+  const nextQueueSong = getNextSongFromQueue();
+  if (nextQueueSong) {
+    setCurrentSong(nextQueueSong);
+    setIsPlaying(true);
+    setLastPlayedSongDismissed(false);
+    recordListeningHistory(nextQueueSong.id);
+    
+    // Preload image
+    if (!imageUrls[nextQueueSong.img_id]) {
+      const newUrl = `/api/image-proxy?fileid=${nextQueueSong.img_id}`;
+      setImageUrls(prev => ({ ...prev, [nextQueueSong.img_id]: newUrl }));
+    }
+    return;
+  }
+
+  // If no queue, proceed with normal next song logic
   const currentIndex = songs.findIndex(song => song.id === currentSong.id);
   const nextIndex = currentIndex < songs.length - 1 ? currentIndex + 1 : 0;
   const nextSong = songs[nextIndex];
@@ -320,6 +350,7 @@ const handleNext = () => {
           playlists={playlists} 
           onBack={() => setCurrentPage('main')} 
           onSongPlay={handleSongPlay}
+          onAddToQueue={handleAddToQueue}
           onCreatePlaylist={() => setShowCreatePlaylistModal(true)}
           onDeletePlaylist={deletePlaylist}
           onRenamePlaylist={renamePlaylist}
@@ -330,7 +361,7 @@ const handleNext = () => {
     }
     
     if (currentPage === 'liked') {
-      return <LikedSongsPage songs={likedSongs} onBack={() => setCurrentPage('main')} onSongPlay={handleSongPlay} imageUrls={imageUrls}/>;
+      return <LikedSongsPage songs={likedSongs} onBack={() => setCurrentPage('main')} onSongPlay={handleSongPlay} onAddToQueue={handleAddToQueue} imageUrls={imageUrls}/>;
     }
 
     switch (activeTab) {
@@ -340,6 +371,7 @@ const handleNext = () => {
                 onSongPlay={handleSongPlay}
                 formatNumber={formatNumber}
                 onAddToPlaylist={handleAddToPlaylist}
+                onAddToQueue={handleAddToQueue}
                 imageUrls={imageUrls}
                 onLoadMore={loadMoreSongs}
                 hasMoreSongs={displayCount < songs.length}
@@ -350,6 +382,7 @@ const handleNext = () => {
               onSongPlay={handleSongPlay}
               formatNumber={formatNumber}
               onAddToPlaylist={handleAddToPlaylist}
+              onAddToQueue={handleAddToQueue}
               imageUrls={imageUrls}
               setImageUrls={setImageUrls}
             />;
@@ -361,6 +394,7 @@ const handleNext = () => {
               onSongPlay={handleSongPlay}
               formatNumber={formatNumber}
               onAddToPlaylist={handleAddToPlaylist}
+              onAddToQueue={handleAddToQueue}
               imageUrls={imageUrls}
               onLoadMore={loadMoreSongs}
               hasMoreSongs={displayCount < songs.length}
@@ -466,6 +500,10 @@ const setCurrentTimeState = setCurrentTime;
                 setVolume={setVolume}
                 isSeeking={isSeeking}
                 setIsSeeking={setIsSeeking}
+                queue={queue}
+                onRemoveFromQueue={removeFromQueue}
+                onSongPlay={handleSongPlay}
+                imageUrls={imageUrls}
               />
             )}
           </>

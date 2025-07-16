@@ -8,6 +8,7 @@ interface PlaylistsPageProps {
   playlists: Playlist[];
   onBack: () => void;
   onSongPlay: (song: Song) => void;
+  onAddToQueue: (song: Song) => void;
   onCreatePlaylist: () => void;
   onDeletePlaylist: (playlistId: string) => void;
   onRenamePlaylist: (playlistId: string, newName: string) => void;
@@ -20,6 +21,7 @@ const PlaylistsPage: React.FC<PlaylistsPageProps> = ({
   playlists, 
   onBack, 
   onSongPlay,
+  onAddToQueue,
   onCreatePlaylist,
   onDeletePlaylist,
   onRenamePlaylist,
@@ -138,6 +140,7 @@ const PlaylistsPage: React.FC<PlaylistsPageProps> = ({
                     song={{ ...song, image: imageUrls[song.id] || '/placeholder.png' }} 
                     onPlay={onSongPlay} 
                     formatNumber={formatNumber}
+                   onAddToQueue={onAddToQueue}
                     showRemoveButton={true}
                     onRemove={() => handleRemoveSong(song.id)}
                     cachedImageUrl={imageUrls[song.id] || '/placeholder.png'}

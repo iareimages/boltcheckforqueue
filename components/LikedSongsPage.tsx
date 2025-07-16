@@ -8,10 +8,11 @@ interface LikedSongsPageProps {
   songs: Song[];
   onBack: () => void;
   onSongPlay: (song: Song) => void;
+  onAddToQueue: (song: Song) => void;
   imageUrls: Record<string, string>; 
 }
 
-const LikedSongsPage: React.FC<LikedSongsPageProps> = ({ songs, onBack, onSongPlay,imageUrls }) => {
+const LikedSongsPage: React.FC<LikedSongsPageProps> = ({ songs, onBack, onSongPlay, onAddToQueue, imageUrls }) => {
   const { isDarkMode } = useTheme();
 
   const formatNumber = (num: number): string => {
@@ -64,7 +65,14 @@ const LikedSongsPage: React.FC<LikedSongsPageProps> = ({ songs, onBack, onSongPl
         {songs.length > 0 ? (
           <div className="space-y-3">
             {songs.map((song) => (
-              <SongCard key={song.id} song={{ ...song, image: imageUrls[song.id] || '/placeholder.png' }} onPlay={onSongPlay} formatNumber={formatNumber}  cachedImageUrl={imageUrls[song.id] || '/placeholder.png'}/>
+              <SongCard 
+                key={song.id} 
+                song={{ ...song, image: imageUrls[song.id] || '/placeholder.png' }} 
+                onPlay={onSongPlay} 
+                formatNumber={formatNumber}
+                onAddToQueue={onAddToQueue}
+                cachedImageUrl={imageUrls[song.id] || '/placeholder.png'}
+              />
             ))}
           </div>
         ) : (
